@@ -75,12 +75,12 @@ with tab_overview:
         fig.add_vline(
             x=config.BASE_SCORE, line_dash="dash", annotation_text="Base score"
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
     with c2:
         fig = px.histogram(
             portfolio, x="PD_CALIBRATED", nbins=50, title="Calibrated PD Distribution"
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
     st.subheader("Risk Segment Breakdown")
     seg = (
@@ -94,7 +94,7 @@ with tab_overview:
         )
         .reset_index()
     )
-    st.dataframe(seg, use_container_width=True)
+    st.dataframe(seg, width="stretch")
 
 # ------------------------------------------------------------------
 # TAB 2 — Stress Testing
@@ -215,4 +215,4 @@ with tab_lookup:
                 "EL": [row[f"EL_{s}"] for s in scenario_names],
             }
         )
-        st.dataframe(scen_data, use_container_width=True)
+        st.dataframe(scen_data, width="stretch")
