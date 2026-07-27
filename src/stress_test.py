@@ -31,7 +31,11 @@ def _logit(p):
 
 
 def _sigmoid(x):
-    return 1 / (1 + np.exp(-x))
+    with np.errstate(over="ignore"):
+        result = 1 / (1 + np.exp(-x))
+    # exp(-x) overflows to inf for very large negative x → result becomes 0 (correct)
+    # exp(-x) underflows to 0 for very large positive x → result becomes 1 (correct)
+    return np.nan_to_num(result, nan=0.5, posinf=1.0, neginf=0.0)
 
 
 def stress_pd(pd_baseline, logit_shift: float):

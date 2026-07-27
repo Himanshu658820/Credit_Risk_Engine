@@ -65,12 +65,12 @@ streamlit run dashboard/app.py
 
 ## Hugging Face Spaces deployment
 
-This repository is already prepared for a Streamlit Space.
+This repository is now prepared for a Hugging Face Docker Space.
 
-1. Create a new Hugging Face Space and choose the Streamlit SDK.
+1. Create a new Hugging Face Space and choose the Docker SDK.
 2. Connect the Space to this GitHub repository.
 3. Keep the generated artifacts in `artifacts/` so the dashboard starts immediately.
-4. Use the repository-root `app.py` as the Space entrypoint.
+4. Use the root `Dockerfile` to launch `app.py` on port `7860`.
 5. Push updates to GitHub; the Space will redeploy from the main branch.
 
 If you later want a source-only Space, we can switch to a startup pipeline that regenerates the artifacts inside Hugging Face instead of committing them.
