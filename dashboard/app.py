@@ -136,7 +136,7 @@ with tab_stress:
         title="Portfolio Expected Loss by Scenario",
         text_auto=".2s",
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
     st.markdown("---")
     st.subheader("Custom Stress Scenario")
