@@ -12,7 +12,11 @@ been run once).
 import os
 import sys
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Ensure project root is on the path regardless of how Streamlit boots
+_here = os.path.abspath(__file__)                  # .../dashboard/app.py
+_project_root = os.path.dirname(os.path.dirname(_here))  # .../CREDIT_RISK_ENGINE
+if _project_root not in sys.path:
+    sys.path.insert(0, _project_root)
 
 import numpy as np
 import pandas as pd
@@ -71,12 +75,12 @@ with tab_overview:
         fig.add_vline(
             x=config.BASE_SCORE, line_dash="dash", annotation_text="Base score"
         )
-        st.plotly_chart(fig, width="stretch")
+        st.plotly_chart(fig, use_container_width=True)
     with c2:
         fig = px.histogram(
             portfolio, x="PD_CALIBRATED", nbins=50, title="Calibrated PD Distribution"
         )
-        st.plotly_chart(fig, width="stretch")
+        st.plotly_chart(fig, use_container_width=True)
 
     st.subheader("Risk Segment Breakdown")
     seg = (
@@ -90,7 +94,7 @@ with tab_overview:
         )
         .reset_index()
     )
-    st.dataframe(seg, width="stretch")
+    st.dataframe(seg, use_container_width=True)
 
 # ------------------------------------------------------------------
 # TAB 2 — Stress Testing
@@ -132,7 +136,7 @@ with tab_stress:
         title="Portfolio Expected Loss by Scenario",
         text_auto=".2s",
     )
-    st.plotly_chart(fig, width="stretch")
+    st.plotly_chart(fig, use_container_width=True)
 
     st.markdown("---")
     st.subheader("Custom Stress Scenario")
@@ -211,4 +215,4 @@ with tab_lookup:
                 "EL": [row[f"EL_{s}"] for s in scenario_names],
             }
         )
-        st.dataframe(scen_data, width="stretch")
+        st.dataframe(scen_data, use_container_width=True)
