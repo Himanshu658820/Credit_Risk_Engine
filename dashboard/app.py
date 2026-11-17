@@ -29,6 +29,12 @@ from src import stress_test
 
 st.set_page_config(page_title="Credit Risk Analytics Engine", layout="wide")
 
+view = st.sidebar.radio('Workspace', ['Model validation and explanations', 'Legacy portfolio demo'])
+if view == 'Model validation and explanations':
+    from dashboard.validation import render
+    render()
+    st.stop()
+
 
 @st.cache_data
 def load_portfolio():
@@ -36,8 +42,9 @@ def load_portfolio():
 
 
 st.title("Credit Risk Analytics Engine")
+st.info('Legacy portfolio demo: these scores come from the original artifacts, not the validated run. Monetary amounts use dataset units; LGD/EAD are assumptions.')
 st.caption(
-    "PD from calibrated LightGBM • 300-850 scorecard via WoE/log-odds scaling • "
+    "PD from calibrated LightGBM • custom 300-850 score via log-odds scaling • "
     "Expected Loss stress-testing under simulated recession scenarios"
 )
 
@@ -65,7 +72,7 @@ with tab_overview:
     col1.metric("Portfolio size", f"{len(portfolio):,}")
     col2.metric("Mean PD (calibrated)", f"{portfolio['PD_CALIBRATED'].mean():.2%}")
     col3.metric("Mean Score", f"{portfolio['SCORE'].mean():.0f}")
-    col4.metric("Baseline Portfolio EL", f"₹{portfolio['EL_baseline'].sum():,.0f}")
+    col4.metric("Baseline Portfolio EL", f"{portfolio['EL_baseline'].sum():,.0f}")
 
     c1, c2 = st.columns(2)
     with c1:
@@ -125,7 +132,7 @@ with tab_stress:
         row = summary[summary["scenario"] == name].iloc[0]
         col.metric(
             name.replace("_", " ").title(),
-            f"₹{row['portfolio_EL']:,.0f}",
+            f"{row['portfolio_EL']:,.0f}",
             f"{row['EL_shift_pct']:+.1f}%" if name != "baseline" else None,
         )
 
@@ -169,7 +176,7 @@ with tab_stress:
             c_m1, c_m2 = st.columns(2)
             c_m1.metric(
                 "Custom Scenario Portfolio EL",
-                f"₹{custom_el_total:,.0f}",
+                f"{custom_el_total:,.0f}",
                 f"{custom_shift_pct:+.1f}%",
             )
             c_m2.metric(
@@ -204,7 +211,7 @@ with tab_lookup:
         c1.metric("Score", f"{row['SCORE']:.0f}")
         c2.metric("Calibrated PD", f"{row['PD_CALIBRATED']:.2%}")
         c3.metric("LGD", f"{row['LGD']:.0%}")
-        c4.metric("EAD", f"₹{row['EAD']:,.0f}")
+        c4.metric("EAD", f"{row['EAD']:,.0f}")
 
         st.write(f"**Security class:** {row['SECURITY_CLASS']}")
 
