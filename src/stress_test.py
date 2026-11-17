@@ -40,13 +40,24 @@ def _sigmoid(x):
 
 def stress_pd(pd_baseline, logit_shift: float):
     """Shift PD's log-odds by `logit_shift` and map back to probability."""
-    pd_baseline = np.asarray(pd_baseline, dtype=float)
+    from .schema import bounded_values
+    pd_baseline = bounded_values(pd_baseline, "PD", maximum=1)
+    if not np.isfinite(logit_shift):
+        raise ValueError("Logit shift must be finite")
+    if logit_shift == 0:
+        return pd_baseline.copy()
     return _sigmoid(_logit(pd_baseline) + logit_shift)
 
 
 def compute_expected_loss(pd_arr, lgd_arr, ead_arr):
     """EL = PD * LGD * EAD, fully vectorized."""
-    return np.asarray(pd_arr) * np.asarray(lgd_arr) * np.asarray(ead_arr)
+    from .schema import bounded_values
+    p = bounded_values(pd_arr, "PD", maximum=1)
+    l = bounded_values(lgd_arr, "LGD", maximum=1)
+    e = bounded_values(ead_arr, "EAD")
+    if p.shape != l.shape or p.shape != e.shape:
+        raise ValueError("PD, LGD and EAD must have matching shapes")
+    return p * l * e
 
 
 def run_scenario(pd_baseline, lgd_baseline, ead, scenario_name: str):
@@ -97,7 +108,7 @@ def run_all_scenarios(portfolio: pd.DataFrame,
     summary = pd.DataFrame(summary_rows)
     baseline_el = summary.loc[summary["scenario"] == "baseline", "portfolio_EL"].iloc[0]
     summary["EL_shift_abs"] = summary["portfolio_EL"] - baseline_el
-    summary["EL_shift_pct"] = 100 * summary["EL_shift_abs"] / baseline_el
+    summary["EL_shift_pct"] = 100 * summary["EL_shift_abs"] / baseline_el if baseline_el else 0.0
 
     return result, summary
 

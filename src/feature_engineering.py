@@ -61,7 +61,7 @@ def reduce_mem_usage(df, name=""):
     return df
 
 
-def one_hot(df, exclude_prefix="_RAW_"):
+def one_hot(df, exclude_prefix="_RAW_", reference_mask=None):
     """Dummy-encode any non-numeric, non-boolean column.
 
     Deliberately does NOT rely on `dtype == 'object'` — newer pandas
@@ -77,6 +77,11 @@ def one_hot(df, exclude_prefix="_RAW_"):
                 if not pd.api.types.is_numeric_dtype(df[c])
                 and not pd.api.types.is_bool_dtype(df[c])
                 and not str(c).startswith(exclude_prefix)]
+    if reference_mask is not None:
+        for col in cat_cols:
+            categories = sorted(df.loc[reference_mask, col].dropna().unique())
+            values = df[col].where(df[col].isin(categories))
+            df[col] = pd.Categorical(values, categories=categories)
     df = pd.get_dummies(df, columns=cat_cols, dummy_na=True)
     return df, cat_cols
 
@@ -105,7 +110,7 @@ def sanitize_columns(df):
 # ----------------------------------------------------------------------
 # 1. APPLICATION TRAIN/TEST
 # ----------------------------------------------------------------------
-def process_application():
+def process_application(development_ids=None):
     train = pd.read_csv(os.path.join(config.DATA_DIR, "application_train.csv"))
     test = pd.read_csv(os.path.join(config.DATA_DIR, "application_test.csv"))
     print(f"application_train: {train.shape}, application_test: {test.shape}")
@@ -137,7 +142,8 @@ def process_application():
     df["_RAW_AMT_GOODS_PRICE"] = df["AMT_GOODS_PRICE"]
     df["_RAW_AMT_CREDIT"] = df["AMT_CREDIT"]
 
-    df, _ = one_hot(df)
+    mask = df.SK_ID_CURR.isin(development_ids) if development_ids is not None else None
+    df, _ = one_hot(df, reference_mask=mask)
     df = reduce_mem_usage(df, "application")
     return df
 
@@ -255,9 +261,10 @@ def process_installments():
 # ----------------------------------------------------------------------
 # 6. CREDIT_CARD_BALANCE
 # ----------------------------------------------------------------------
-def process_credit_card():
+def process_credit_card(development_ids=None):
     cc = pd.read_csv(os.path.join(config.DATA_DIR, "credit_card_balance.csv"))
-    cc, _ = one_hot(cc)
+    mask = cc.SK_ID_CURR.isin(development_ids) if development_ids is not None else None
+    cc, _ = one_hot(cc, reference_mask=mask)
     cc["UTILIZATION"] = cc["AMT_BALANCE"] / cc["AMT_CREDIT_LIMIT_ACTUAL"]
 
     agg = cc.groupby("SK_ID_CURR").agg(["mean", "max", "sum"])
@@ -270,12 +277,12 @@ def process_credit_card():
 # ----------------------------------------------------------------------
 # BUILD FULL FEATURE TABLE
 # ----------------------------------------------------------------------
-def build_features():
-    df = process_application()
+def build_features(development_ids=None):
+    df = process_application(development_ids)
 
     for builder in [process_bureau, process_previous_application,
                      process_pos_cash, process_installments, process_credit_card]:
-        piece = builder()
+        piece = builder(development_ids) if builder is process_credit_card else builder()
         df = df.merge(piece, on="SK_ID_CURR", how="left")
         del piece
         gc.collect()

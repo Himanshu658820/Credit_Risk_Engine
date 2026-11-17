@@ -9,3 +9,5 @@ env/
 
 # Raw Home Credit source data is intentionally kept out of Git.
 DATA_SET/
+artifacts/validated/
+artifacts/validated-training.log

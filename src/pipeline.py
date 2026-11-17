@@ -57,7 +57,8 @@ def score_new_loan(raw_features: dict) -> dict:
     with open(config.MODEL_PATH, "rb") as f:
         bundle = pickle.load(f)
 
-    X = pd.DataFrame([raw_features])[bundle["feature_names"]]
+    from .schema import validate_features
+    X = validate_features(raw_features, bundle["feature_names"])
     fold_preds = [m.predict(X, num_iteration=m.best_iteration) for m in bundle["fold_models"]]
     pd_raw = float(np.mean(fold_preds))
 

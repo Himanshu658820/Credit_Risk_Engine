@@ -44,7 +44,8 @@ def pd_to_score(calibrated_pd, base_score=None, base_odds=None, pdo=None,
     score_min = score_min if score_min is not None else config.SCORE_MIN
     score_max = score_max if score_max is not None else config.SCORE_MAX
 
-    calibrated_pd = np.clip(np.asarray(calibrated_pd, dtype=float), 1e-6, 1 - 1e-6)
+    from .schema import bounded_values
+    calibrated_pd = np.clip(bounded_values(calibrated_pd, "PD", maximum=1), 1e-6, 1 - 1e-6)
     odds = (1 - calibrated_pd) / calibrated_pd
 
     factor = pdo / np.log(2)
